@@ -1,0 +1,97 @@
+---
+title: "Carter_TermProject"
+author: "Robert Carter"
+date: "3/12/2018"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+The Business Problem:
+
+Movie studio's spend hundreds of millions of dollars to produce films. It is diffilcult to tell if a movie will generate the money spent to make the film and create a profit. The goal of this analysis is to determine what variable are significant in determining a higher revenue for a movie.
+
+The Importance Of This Question:
+
+No one like to lose money. By determing the variables that would help determine a higher revenue, movie studios can tailor the film's marketing to make sure the film is successfull at maximizing the revenue for the film. This would help minimize the likelyhood of the studio losing out on the money that was invested in tihe film.
+
+The Data:
+
+The IMDB data source inculdes 12 different variables. The depeendent variabnle that will be used in the prediction is Revenue, While Rank, Title, Genre, Description,	Director,	Actors,	Year,	Runtime (Minutes), Rating,	Votes, Revenue (Millions), and 	Metascore are the independent variable.
+
+Let's start by loading and attaching the IMDB dataset. Once loaded and attached, a brief summary of the data will be printed.
+
+```{r}
+imdb = read.csv("~/Documents/IMDB_Movie.csv", header = TRUE, ,na.strings="0")
+attach(imdb)
+summary(imdb)
+```
+
+Cleaning up the data is important to a accurate analysis. In this section we will clean up the data and remove any data that we does not have any importance to the analysis of the reveneue. Also, we will be altering table names since not all columsn names were uniform and create two new columsn for the first genre that populates in the genre column and the Main actor of the movie. That is the first actor that shows up the actors column.
+
+```{r}
+imdb2 = subset(imdb, select = -c(Description) )
+
+imdb2$Genre2 = gsub("\\,.*","", imdb2$Genre) 
+
+imdb2$MainActor = gsub("\\,.*","", imdb2$Actors) 
+
+imdbclean = subset(imdb2, !is.na(Revenue..Millions.))
+
+imdbclean = subset(imdbclean, !is.na(Metascore))
+
+colnames(imdbclean)[colnames(imdbclean)=="Revenue..Millions."] = "Revenue"
+
+colnames(imdbclean)[colnames(imdbclean)=="Runtime..Minutes."] = "Runtime"
+
+imdbclean[1,]
+```
+
+After cleaning the data we get a summary of the output to help undertand the dataset we are going to use going forward in our analysis.
+
+```{r}
+summary(imdbclean)
+```
+
+We grab the mean to get a close understanding of the Revenue column and what to expect on average. It appears that of the 800 plus films remaining in the data the average movie makes about $84 million.
+
+As shown in the histogram this checks out. Well over half of the data that is in in our data set in represented in the first bar of the histogram where a majority of the movie make less that $100 million dollars.
+
+```{r}
+mean(imdbclean$Revenue)
+hist(imdbclean$Revenue, main = "Movie Revenue", xlab = "Revenue ($ Millions)")
+```
+
+
+Now we will determine the significant variables to our analyis by running a simple linear regression model.
+
+There are many significant variables in the dataset. You can determine this by the p-value of the variables. Among the significant variable; ratinf, vote, year, and runtime all prove to be significant variable. We will use these variables going forward in our analysis. Also, the overall model was significant, the p-value for the entire liniear model was well under the .05 threshold for determining significance.
+```{r}
+lm.clean = lm(Revenue ~ Metascore + Rating + Votes + Year + Runtime + Genre2, data = imdbclean)
+summary(lm.cleanfull)
+```
+
+To further check the signifcance of our data we will run Variance Inflation Factors function. By rule since all data points are under 10 then there are no multicollinearity issues.
+
+```{r}
+vif(lm.cleanfull)
+```
+
+Last, we conclude with a regression tree. This tree makes the data easy to interpret and helps easily identify which variables are the ket variables in determing what predictors indicate a higher revenue. The three main variables are Votes, Year, and Rating.
+
+```{r}
+regtree.fit=tree(Revenue ~ Metascore + Rating + Votes + Year + Runtime, data = imdbclean)
+plot(regtree.fit)
+text(regtree.fit,pretty=0)
+```
+ In conclusion, fan engagement seems to be the best variable to predict the revenue outcome for movies. It is the highest variable on the regression tree and had a very low p-value in the regression model.
+
+
+
+
+
+
+
